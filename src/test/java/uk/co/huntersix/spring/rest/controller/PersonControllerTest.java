@@ -1,12 +1,17 @@
 package uk.co.huntersix.spring.rest.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.RequestBuilder;
 import uk.co.huntersix.spring.rest.model.Person;
 import uk.co.huntersix.spring.rest.referencedata.PersonDataService;
 
@@ -19,6 +24,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,6 +35,9 @@ public class PersonControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockBean
     private PersonDataService personDataService;
@@ -79,5 +88,34 @@ public class PersonControllerTest {
                 .andExpect(jsonPath("$").doesNotExist());
     }
 
+
+    @Test
+    public void shouldReturnStatusCreatedWhenNewPersonIsAdded() throws Exception {
+        Person person = new Person("Cetin", "Baskose");
+        ResponseEntity<Person> responseEntity = new ResponseEntity<Person>(person, HttpStatus.CREATED);
+        when(personDataService.addPerson(any())).thenReturn(responseEntity);
+        this.mockMvc.perform(post("/personAdd")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(person)))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("id").exists())
+                .andExpect(jsonPath("firstName").value("Cetin"))
+                .andExpect(jsonPath("lastName").value("Baskose"));
+    }
+
+
+    @Test
+    public void shouldReturnStatusConflictWhenNewPersonAlreadyExists() throws Exception {
+        Person person = new Person("Mary", "Smith");
+        ResponseEntity<Person> responseEntity = new ResponseEntity<Person>(HttpStatus.CONFLICT);
+        when(personDataService.addPerson(any())).thenReturn(responseEntity);
+        this.mockMvc.perform(post("/personAdd")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(person)))
+                .andDo(print())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$").doesNotExist());
+    }
 
 }

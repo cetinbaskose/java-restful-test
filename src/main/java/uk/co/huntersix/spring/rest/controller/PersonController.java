@@ -2,9 +2,7 @@ package uk.co.huntersix.spring.rest.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import uk.co.huntersix.spring.rest.model.Person;
 import uk.co.huntersix.spring.rest.referencedata.PersonDataService;
 
@@ -33,4 +31,10 @@ public class PersonController {
             return ResponseEntity.ok(result);
         }
     }
+
+    @PostMapping("/personAdd")
+    public ResponseEntity<Person> addPerson(@RequestBody Person person) {
+        return personDataService.addPerson(person);
+    }
+
 }
