@@ -2,13 +2,11 @@ package uk.co.huntersix.spring.rest.controller;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.co.huntersix.spring.rest.referencedata.PersonDataService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,12 +20,44 @@ public class HttpRequestTest {
     private TestRestTemplate restTemplate;
 
     @Test
-    public void shouldReturnPersonDetails() throws Exception {
+    public void shouldReturnPersonDetails() {
         assertThat(
-            this.restTemplate.getForObject(
-                "http://localhost:" + port + "/person/smith/mary",
-                String.class
-            )
+                this.restTemplate.getForObject(
+                        "http://localhost:" + port + "/person/smith/mary",
+                        String.class
+                )
         ).contains("Mary");
     }
+
+    @Test
+    public void shouldReturnNotFoundPersonBySurname() {
+        assertThat(
+                this.restTemplate.getForEntity(
+                        "http://localhost:" + port + "/personBySurname/NoOne",
+                        String.class
+                ).getStatusCodeValue()
+        ).isEqualTo(404);
+    }
+
+    @Test
+    public void shouldReturnPersonBySurname() {
+        assertThat(
+                this.restTemplate.getForObject(
+                        "http://localhost:" + port + "/personBySurname/Archer",
+                        String.class
+                )
+        ).contains("Brian");
+    }
+
+    @Test
+    public void shouldReturnMultiplePersonBySurname() {
+        assertThat(
+                this.restTemplate.getForObject(
+                        "http://localhost:" + port + "/personBySurname/Brown",
+                        String.class
+                )
+        ).contains("Collin", "Carolina");
+    }
+
+
 }

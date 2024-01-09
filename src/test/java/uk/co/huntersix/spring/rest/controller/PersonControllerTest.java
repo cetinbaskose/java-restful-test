@@ -10,8 +10,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.co.huntersix.spring.rest.model.Person;
 import uk.co.huntersix.spring.rest.referencedata.PersonDataService;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -41,9 +45,35 @@ public class PersonControllerTest {
     }
 
     @Test
-    public void shouldNotReturnPersonFromServiceI() throws Exception {
+    public void shouldNotReturnPersonFromService() throws Exception {
         when(personDataService.findPerson(any(), any())).thenReturn(Optional.empty());
         this.mockMvc.perform(get("/person/baskose/cetin"))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$").doesNotExist());
+    }
+
+    @Test
+    public void shouldReturnPersonListBySurnameFromService() throws Exception {
+        List<Person> personList = Arrays.asList(
+                new Person("Mary", "Smith")
+        );
+
+        when(personDataService.findPersonBySurname(any())).thenReturn(personList);
+        this.mockMvc.perform(get("/personBySurname/smith/"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id").exists())
+                .andExpect(jsonPath("$[0].firstName").value("Mary"))
+                .andExpect(jsonPath("$[0].lastName").value("Smith"));
+    }
+
+    @Test
+    public void shouldReturnNotFoundBySurnameFromServiceWhenPersonNotFound() throws Exception {
+        when(personDataService.findPersonBySurname(any())).thenReturn(Collections.emptyList());
+
+        this.mockMvc.perform(get("/personBySurname/baskose/"))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$").doesNotExist());
